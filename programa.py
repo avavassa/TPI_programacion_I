@@ -1,7 +1,19 @@
 import os
 import csv  # Uso del módulo nativo para una lectura y escritura robusta
+import unicodedata # Uso del módulo nativo para normalización de nombres de países y continentes
+
 
 ARCHIVO_CSV = "paises.csv"
+
+def normalizar_texto(texto):
+    """Convierte a minúsculas y elimina acentos."""
+    if not texto:
+        return ""
+    # Descomponer caracteres acentuados en base + diacrítico
+    texto = unicodedata.normalize('NFD', texto)
+    # Filtrar solo caracteres no diacríticos (letras, números, espacios)
+    texto = ''.join(c for c in texto if unicodedata.category(c) != 'Mn')
+    return texto.lower()
 
 def verificar_e_inicializar_csv():
     """Verifica la existencia del archivo CSV y lo inicializa si no existe."""
@@ -13,9 +25,9 @@ def verificar_e_inicializar_csv():
                 escritor.writerow(["nombre", "poblacion", "superficie", "continente"])
                 # Registros base solicitados por la cátedra
                 escritor.writerows([
-                    ["Argentina", 45376763, 2780400, "América"],
+                    ["Argentina", 45376763, 2780400, "America"],
                     ["Japón", 125800000, 377975, "Asia"],
-                    ["Brasil", 213993437, 8515767, "América"],
+                    ["Brasil", 213993437, 8515767, "America"],
                     ["Alemania", 83149300, 357022, "Europa"]
                 ])
         except IOError:
@@ -39,11 +51,18 @@ def cargar_desde_csv():
             for i, fila in enumerate(lector, start=2):
                 try:
                     # Limpieza de espacios en blanco y conversión de tipos
+                    nombre = fila["nombre"].strip()
+                    poblacion = int(fila["poblacion"].strip())
+                    superficie = int(fila["superficie"].strip())
+                    continente = fila["continente"].strip()
+                    # Crea diccionario con datos originales y normalizados para busquedas efectivas
                     pais = {
-                        "nombre": fila["nombre"].strip(),
-                        "poblacion": int(fila["poblacion"].strip()),
-                        "superficie": int(fila["superficie"].strip()),
-                        "continente": fila["continente"].strip()
+                        "nombre": nombre,
+                        "poblacion": poblacion,
+                        "superficie": superficie,
+                        "continente": continente,
+                        "nombre_norm": normalizar_texto(nombre), # Agrega entrada de nombre normalizado
+                        "continente_norm": normalizar_texto(continente) # Nombre continente normalizado
                     }
                     lista_paises.append(pais)
                 except (ValueError, KeyError, AttributeError):
@@ -62,7 +81,7 @@ def guardar_en_csv(lista_paises):
             
             escritor.writeheader()
             for pais in lista_paises:
-                escritor.writerow(pais)
+                escritor.writerow({k: pais[k] for k in campos}) # Omite los campos normalizados al guardar en CSV
         print("Cambios guardados con éxito en el archivo CSV.")
     except PermissionError:
         print("Error: El archivo CSV está abierto en otro programa. Ciérrelo e intente de nuevo.")
@@ -91,9 +110,10 @@ def agregar_pais(lista_paises):
         print("Error: El nombre no puede estar vacío.")
         return
 
-    # Evita duplicados sin importar mayúsculas/minúsculas
+    # Evita duplicados utilizando nombre normalizado
+    nombre_norm = normalizar_texto(nombre)
     for p in lista_paises:
-        if p["nombre"].lower() == nombre.lower():
+        if p["nombre_norm"] == nombre_norm:
             print("Error: El país ya existe.")
             return
             
@@ -110,29 +130,46 @@ def agregar_pais(lista_paises):
     except ValueError:
         print("Error: La población y la superficie deben ser números enteros.")
         return
-        
-    continente = input("Continente: ").strip()
-    if not continente:
-        print("Error: El continente no puede estar vacío.")
-        return
+
+    continentes_validos_norm = ["asia", "africa", "america", "oceania", "europa"] # Lista de continentes válidos normalizados
+    while True:
+        continente = input("Continente: ").strip()
+        if not continente:
+            print("Error: El continente no puede estar vacío.")
+            continue
+        continente_norm = normalizar_texto(continente)
+        if continente_norm in continentes_validos_norm:
+            # Guardamos el continente con capitalización correcta (ej. "America")
+            continente_guardado = continente.capitalize()
+            break
+        else:
+            print("Error: Continente no válido. Use: Asia, Africa, América, Oceanía, Europa.")
         
     nuevo_pais = {
-        "nombre": nombre.capitalize(),  # Guardamos con formato estándar estético
+        "nombre": nombre.title(),  # Guardamos con formato estándar estético
         "poblacion": poblacion,
         "superficie": superficie,
-        "continente": continente.capitalize()
+        "continente": continente_guardado,
+        "nombre_norm": nombre_norm,
+        "continente_norm": continente_norm
     }
     lista_paises.append(nuevo_pais)
-    print(f"País '{nuevo_pais['nombre']}' registrado exitosamente en memoria.")
+    print(f"País '{nuevo_pais['nombre']}' registrado exitosamente.")
 
 def actualizar_pais(lista_paises):
     """Actualiza la población y superficie de un país existente."""
     print("\n--- ACTUALIZAR DATOS DE PAÍS ---")
-    nombre_buscar = input("Ingrese el nombre exacto del país a modificar: ").strip().lower()
+    nombre_buscar = input("Ingrese el nombre exacto del país a modificar: ").strip()
     
+    if not nombre_buscar:
+        print("Error: El nombre no puede estar vacío.")
+        return
+        
+    nombre_buscar_norm = normalizar_texto(nombre_buscar)
+
     encontrado = None
     for pais in lista_paises:
-        if pais["nombre"].lower() == nombre_buscar:
+        if pais["nombre_norm"] == nombre_buscar_norm:
             encontrado = pais
             break
             
@@ -158,6 +195,7 @@ def buscar_pais_nombre(lista_paises):
     """Busca países por coincidencia exacta o parcial en el nombre."""
     print("\n--- BUSCAR PAÍS ---")
     criterio = input("Ingrese el nombre (o parte del nombre) a buscar: ").strip().lower()
+    criterio_norm = normalizar_texto(criterio)  # aunque ya lower, normaliza acentos
     
     if not criterio:
         print("Error: El criterio de búsqueda no puede estar vacío.")
@@ -165,7 +203,7 @@ def buscar_pais_nombre(lista_paises):
         
     coincidencias = []
     for pais in lista_paises:
-        if criterio in pais["nombre"].lower():
+        if criterio_norm in pais["nombre_norm"]:
             coincidencias.append(pais)
             
     if coincidencias:
@@ -189,11 +227,12 @@ def filtrar_paises(lista_paises):
     resultados = []
     
     if opcion == "1":
-        continente = input("Ingrese el continente a filtrar: ").strip().lower()
+        continente = input("Ingrese el continente a filtrar: ").strip()
+        continente_norm = normalizar_texto(continente)
         for p in lista_paises:
-            if p["continente"].lower() == continente:
+            if p["continente_norm"] == continente_norm:
                 resultados.append(p)
-                
+
     elif opcion == "2":
         try:
             min_pob = int(input("Población mínima: "))
@@ -265,8 +304,11 @@ def ordenar_paises(lista_paises):
             valor_siguiente = lista_ordenada[j+1][clave]
             
             if clave == "nombre":
-                valor_actual = valor_actual.lower()
-                valor_siguiente = valor_siguiente.lower()
+                valor_actual = lista_ordenada[j]["nombre_norm"]
+                valor_siguiente = lista_ordenada[j+1]["nombre_norm"]
+            else:
+                valor_actual = lista_ordenada[j][clave]
+                valor_siguiente = lista_ordenada[j+1][clave]
                 
             intercambiar = False
             if sentido == "1" and valor_actual > valor_siguiente:
@@ -305,11 +347,8 @@ def mostrar_estadisticas(lista_paises):
         if pais["poblacion"] < pais_min_pob["poblacion"]:
             pais_min_pob = pais
             
-        cont = pais["continente"]
-        if cont in conteos_continente:
-            conteos_continente[cont] += 1
-        else:
-            conteos_continente[cont] = 1
+        cont = pais["continente_norm"].capitalize()  # Mostrar bonito
+        conteos_continente[cont] = conteos_continente.get(cont, 0) + 1
             
     total_paises = len(lista_paises)
     promedio_pob = suma_poblacion / total_paises
@@ -321,8 +360,9 @@ def mostrar_estadisticas(lista_paises):
     print(f"Promedio de superficie global: {promedio_sup:.2f} km2")
     
     print("\nCantidad de países por continente:")
-    for continente, cantidad in conteos_continente.items():
-        print(f" -> {continente}: {cantidad}")
+    for continente_norm, cantidad in conteos_continente.items():
+        nombre_mostrar = continente_norm.capitalize()
+        print(f" -> {nombre_mostrar}: {cantidad}")
     print("==================================================\n")
 
 def ejecutar_menu_tpi():
