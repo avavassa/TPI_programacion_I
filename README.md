@@ -69,6 +69,7 @@ Al finalizar, seleccionar la opción **"Guardar cambios y Salir"** para guardar 
 
 ### Mostrar todos los países
 
+```
 ---------------------------------------------------------------------------
 Nombre               | Población       | Superficie (km2) | Continente     
 ---------------------------------------------------------------------------
@@ -92,7 +93,7 @@ Cuba                 | 10892659        | 110860           | America
 Nigeria              | 227882845       | 910770           | Africa         
 Seychelles           | 99202           | 455              | Africa         
 ---------------------------------------------------------------------------
-
+```
 ---
 
 ### Buscar país
@@ -105,7 +106,7 @@ Ingrese el nombre (o parte del nombre) a buscar: an
 ```
 
 Salida:
-
+```
 Se encontraron 3 coincidencias:
 
 ---------------------------------------------------------------------------
@@ -115,7 +116,7 @@ Alemania             | 83149300        | 357022           | Europa
 Vanuatu              | 327778          | 12189            | Oceania        
 Canadá               | 41288599        | 9984670          | America        
 ---------------------------------------------------------------------------
-
+```
 ---
 
 ### Estadísticas
