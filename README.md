@@ -145,17 +145,13 @@ Cantidad de países por continente:
 
 ## Video demostrativo
 
-Enlace al video:
-
-**[PEGAR AQUÍ EL LINK DEL VIDEO]**
+[Enlace al video](https://drive.google.com/file/d/1fow8qNlRD8U6n80ENxua88fAZ9sQEZlF/view?usp=sharing)
 
 ---
 
 ## Documentación
 
-Documentación en PDF:
-
-**AGREGAR EL PDF A LA RAÍZ UNA VEZ QUE ESTÉ EL VIDEO**
+Documentación en PDF en archivo `TPI PROGRAMACION 1 - INFORME - MALDONADO Y TERMIGNONI` en la raiz del directorio.
 
 ---
 
